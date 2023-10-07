@@ -1,8 +1,8 @@
-const fs = require("fs");
-const http = require("http");
-const url = require("url");
-
-const replaceTemplate = require('./module/replaceTemplate')
+const fs = require('fs');
+const http = require('http');
+const url = require('url');
+const slugify = require('slugify');
+const replaceTemplate = require('./module/replaceTemplate');
 
 /** example Syncronius  */
 // const textIn = fs.readFileSync(
@@ -49,53 +49,66 @@ const replaceTemplate = require('./module/replaceTemplate')
 
 // console.log("Will read file");
 
+const tempOverview = fs.readFileSync(
+  `${__dirname}/templates/template-overview.html`,
+  'utf-8'
+);
+const tempProduct = fs.readFileSync(
+  `${__dirname}/templates/template-product.html`,
+  'utf-8'
+);
+const tempCard = fs.readFileSync(
+  `${__dirname}/templates/template-card.html`,
+  'utf-8'
+);
 
+const data = fs.readFileSync(`${__dirname}/data/data.json`, 'utf-8');
+const dataObj = JSON.parse(data);
 
-const tempOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8')
-const tempProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8')
-const tempCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8')
-
-const data = fs.readFileSync(`${__dirname}/data/data.json`, 'utf-8')
-const dataObj= JSON.parse(data)
-
+const slugs = dataObj.map((el) => slugify(el.productName), { lower: true });
+console.log(slugs);
 
 const server = http.createServer((req, res) => {
-
-  const {query, pathname} = url.parse(req.url, true)
+  const { query, pathname } = url.parse(req.url, true);
 
   // product overview
-  if(pathname === '/' || pathname === '/overview') {
-    res.writeHead(200, {'Content-type': 'text/html'})
+  if (pathname === '/' || pathname === '/overview') {
+    res.writeHead(200, {
+      'Content-type': 'text/html',
+    });
 
-    const cardHtml = dataObj.map(el => replaceTemplate(tempCard, el)).join('')
-    const output = tempOverview.replace('{%PRODUCT_CARDS%}', cardHtml)
+    const cardHtml = dataObj
+      .map((el) => replaceTemplate(tempCard, el))
+      .join('');
+    const output = tempOverview.replace('{%PRODUCT_CARDS%}', cardHtml);
 
-    res.end(output)
-
+    res.end(output);
 
     // Product page
-  } else if(pathname === '/product') {
-    res.writeHead(200, {'Content-type': 'text/html'})
-    const product = dataObj[query.id]
-    const output = replaceTemplate(tempProduct, product)
+  } else if (pathname === '/product') {
+    res.writeHead(200, {
+      'Content-type': 'text/html',
+    });
+    const product = dataObj[query.id];
+    const output = replaceTemplate(tempProduct, product);
 
-    res.end(output)
-
+    res.end(output);
 
     // product API
-  } else if(pathname === '/api') {
-    res.writeHead(200, {'Content-Type': 'application/json'})
-    res.end(data)
-    
+  } else if (pathname === '/api') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+    });
+    res.end(data);
   } else {
     res.writeHead(404, {
       'Content-type': 'text/html',
-      'my-own-header': 'hello-world'
-    })
-    res.end('<h1>Page not found</h1>')
+      'my-own-header': 'hello-world',
+    });
+    res.end('<h1>Page not found</h1>');
   }
 });
 
-server.listen(8000, "127.0.0.1", () => {
-  console.log("Listening to request on port 8000");
+server.listen(8000, '127.0.0.1', () => {
+  console.log('Listening to request on port 8000');
 });
